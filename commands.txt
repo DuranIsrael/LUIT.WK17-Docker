@@ -1,0 +1,36 @@
+*** Make sure you have an AWS Account and AWS cli installed on your local machine. all of this was done usng VSCODE
+    and the terminal. Make sure you already un the aws configuration to connect to your AWS account. ***
+*** Make sure you have Docker downloaded to your local machine ***
+
+*** the "#" represesnts where on the command you will have to input your custom information ***
+
+*** this is howmyou run a docker container using a file to customize your webpage. i chose to use an html file which i got from
+    the documentation at https://www.docker.com/blog/how-to-use-the-official-nginx-docker-image/ and customized it. This is also a good way
+    to check to see if your image works. ***
+docker run -it --rm -d -p 8080:80 --name #name# -v ~/site-content:/usr/share/nginx/html nginx
+
+*** before running the command below i made sure to create a Dockerfile to automate the spin up of my docker image and container. ***
+docker build -t webserver .
+
+*** The code below gives us the deployment time of our continater and than appends the output the index file that we created. ***
+docker inspect -f '{{.State.StartedAt}}' #container name# >> index.html
+
+*** now we run the container from the custom image ***
+docker run -d -p 8080:80 --name #web# #image name#
+
+*** Next up is getting your AWS information using the command below ***
+aws sts get-caller-identification
+
+*** now to authenticate docker. Note that they are only valid for 12 hours ***
+aws ecr get-login-password --region #region# | docker login --username AWS --password-stdin #asw_account_id#.dkr.ecr.#region#.amazonaws.com
+
+*** create a repository ***
+aws ecr create-repository --repository-name #name#
+
+*** tag our image to the repository ***
+docker tag #image id# #aws_account_id#.dkr.ecr.#region#.amazonaws.com/#my-repository#:tag
+
+*** push our image up to AWS ECR ***
+docker push #aws_account_id#.dkr.ecr.#region#.amazonaws.com/#my-repository#:tag
+
+*** And that should do it. double check your AWS console to see the Docker container that we created and pushed to AWS ECR ***
